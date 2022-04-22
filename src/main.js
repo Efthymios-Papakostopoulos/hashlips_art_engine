@@ -1,6 +1,21 @@
 const basePath = process.cwd();
-const { NETWORK } = require(`${basePath}/constants/network.js`);
 const fs = require("fs");
+
+if (!fs.existsSync(`${basePath}/node_modules/sha1`)) {
+  console.error("You need to run npm install");
+  process.exit();
+}
+
+let config;
+
+try {
+  config = require(`${basePath}/src/config.js`)
+} catch (error) {
+  console.error(`Syntax error: ${error.message} in src/config.js`);
+  process.exit();
+}
+
+const { NETWORK } = require(`${basePath}/constants/network.js`);
 const { freemem } = require('os');
 const {
   Canvas,
@@ -16,15 +31,6 @@ CanvasRenderingContext2dInit(DOMMatrix, parseFont);
 const sha1 = require(`${basePath}/node_modules/sha1`);
 const buildDir = `${basePath}/build`;
 const layersDir = `${basePath}/layers`;
-
-let config;
-
-try {
-  config = require(`${basePath}/src/config.js`)
-} catch (error) {
-  console.error(`Syntax error: ${error.message} in src/config.js`);
-  process.exit();
-}
 
 let {
   baseUri,
@@ -429,22 +435,22 @@ const startCreating = () => {
   let offset = network == NETWORK.sol ? 0 : 1;
 
   for (layerconfiguration of layerConfigurations) {
-    const layers = layersSetup(layerconfiguration.layersOrder);
+    const layers = layersSetup(layerconfiguration[Object.keys(layerconfiguration).find(k => k.toLowerCase() == "layersorder")]);
 
-    if (network != NETWORK.sol && layerconfiguration.startEditionFrom) {
-      offset = layerconfiguration.startEditionFrom;
+    if (network != NETWORK.sol && layerconfiguration[Object.keys(layerconfiguration).find(k => k.toLowerCase() == "starteditionfrom")] != undefined) {
+      offset = layerconfiguration[Object.keys(layerconfiguration).find(k => k.toLowerCase() == "starteditionfrom")];
     }
     const startFrom = offset;
 
     for (
       let i = offset;
-      i < layerconfiguration.growEditionSizeTo + startFrom;
+      i < layerconfiguration[Object.keys(layerconfiguration).find(k => k.toLowerCase() == "groweditionsizeto")] + startFrom;
       i++
     ) {
       if (existingEditions.has(i)) {
         console.log("Edition exists!");
       } else {
-        abstractedIndexes[i] = [layers, layerconfiguration.extraMetadata];
+        abstractedIndexes[i] = [layers, layerconfiguration[Object.keys(layerconfiguration).find(k => k.toLowerCase() == "extrametadata")]];
       }
       offset++;
     }
